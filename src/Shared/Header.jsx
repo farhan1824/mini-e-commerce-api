@@ -1,0 +1,256 @@
+import React, { use } from "react";
+import { Link } from "react-router-dom";
+import { useWishlist } from "../Context/WishlistContext";
+import { AuthContext } from "../Firebase/Authentication/AuthContext";
+import Swal from "sweetalert2";
+
+const Header = () => {
+    const { wishlisted } = useWishlist();
+    const { user, Logout, loading, LoginUser, cartitemholder } = use(AuthContext)
+
+    console.log(user);
+    const handelogin = (e) => {
+        e.preventDefault();
+        console.log("this has been clicked");
+        const form = e.target;
+        const email = form.email.value;
+        const password = form.password.value;
+        console.log(email, password);
+        LoginUser(email, password)
+            .then(() => {
+                Swal.fire({
+                    position: "center",
+                    icon: "success",
+                    title: "Login SuccessFully",
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            })
+
+    }
+    const handelLogout = () => {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "You won't be able to revert this!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, Logout"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Logout()
+                Swal.fire({
+                    title: "Logout!",
+                    text: "Your have been LoggedOut.",
+                    icon: "success"
+                });
+            }
+        })
+
+    }
+    return (
+        <header className="sticky top-0 z-50">
+            <div className="navbar bg-base-100 shadow-sm px-4 md:px-8">
+
+                {/* LEFT */}
+                <div className="flex-1">
+                    {/* Mobile menu */}
+                    <div className="dropdown lg:hidden">
+                        <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
+                            <svg
+                                className="h-5 w-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 6h16M4 12h16M4 18h16"
+                                />
+                            </svg>
+                        </div>
+                        <ul
+                            tabIndex={0}
+                            className="menu menu-sm dropdown-content bg-base-100 rounded-box mt-3 w-52 p-2 shadow"
+                        >
+                            <li><Link to="/shop">Shop by Category</Link></li>
+                            <li><Link to="/shop">New In</Link></li>
+                            <li><Link to="/shop">Sale</Link></li>
+                        </ul>
+                    </div>
+
+                    {/* Logo */}
+                    <Link to="/" className="btn btn-ghost text-2xl font-bold">
+                        milano
+                    </Link>
+                </div>
+
+                {/* CENTER (desktop) */}
+                <div className="hidden lg:flex">
+                    <ul className="menu menu-horizontal gap-8">
+                        <li><Link to="/shop">Shop</Link></li>
+                    </ul>
+                </div>
+
+                {/* RIGHT */}
+                <div className="flex-none flex gap-2">
+
+                    {/* Search */}
+                    <button className="btn btn-ghost btn-circle">
+                        <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                            />
+                        </svg>
+                    </button>
+
+                    {/* Wishlist */}
+                    <Link to="/wishlist" className="btn btn-ghost btn-circle indicator">
+                        <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                            />
+                        </svg>
+                        {wishlisted.length > 0 && (
+                            <span className="badge badge-sm indicator-item">{wishlisted.length}</span>
+                        )}
+                    </Link>
+
+                    {/* Cart dropdown */}
+                    <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
+                        <Link to="/cart" className="indicator">
+                            <svg
+                                className="h-5 w-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                                />
+                            </svg>
+                        </Link>
+                    </div>
+                    {user ? (
+                        <div className="dropdown dropdown-end">
+                            <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
+                                <div className="w-10 rounded-full">
+                                    {
+                                        loading ? <span className="loading loading-bars loading-xl"></span> : <img
+                                            alt="User avatar"
+                                            src={user.photoURL}
+                                        />
+                                    }
+                                </div>
+                            </div>
+
+                            <ul
+                                tabIndex={0}
+                                className="menu menu-sm dropdown-content bg-base-100 rounded-box z-10 mt-3 w-52 p-2 shadow"
+                            >
+                                <li><Link to="/profile">Profile</Link></li>
+                                <li><button onClick={handelLogout}>Logout</button></li>
+                            </ul>
+                        </div>
+                    ) : (
+                        <>
+                            {
+                                loading ? <span className="loading loading-ring loading-xl"></span> : <button
+                                    className="btn btn-lg btn-primary"
+                                    onClick={() => document.getElementById("my_modal_3").showModal()}
+                                >
+                                    Login
+                                </button>
+                            }
+
+                            <dialog id="my_modal_3" className="modal modal-middle">
+                                <div className="modal-box max-w-md">
+                                    {/* Close button */}
+                                    <form method="dialog">
+                                        <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+                                            ✕
+                                        </button>
+                                    </form>
+
+                                    {/* Title */}
+                                    <h3 className="font-bold text-2xl text-center mb-6">Welcome Back 👋</h3>
+
+                                    {/* Login form */}
+                                    <form onSubmit={handelogin} className="space-y-4">
+                                        <div>
+                                            <label className="label">
+                                                <span className="label-text">Email</span>
+                                            </label>
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                className="input input-bordered w-full"
+                                                placeholder="Enter your email"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="label">
+                                                <span className="label-text">Password</span>
+                                            </label>
+                                            <input
+                                                type="password"
+                                                name="password"
+                                                className="input input-bordered w-full"
+                                                placeholder="Enter your password"
+                                                required
+                                            />
+                                        </div>
+
+                                        <button type="submit" className="btn btn-primary w-full mt-2">
+                                            Login
+                                        </button>
+                                    </form>
+
+                                    {/* Register link */}
+                                    <p className="text-center text-sm mt-6">
+                                        Don’t have an account?{" "}
+                                        <Link
+                                            to="/register"
+                                            className="link link-primary font-medium cursor-pointer"
+                                            onClick={() => document.getElementById("my_modal_3").close()}
+                                        >
+                                            Register here
+                                        </Link>
+                                    </p>
+                                </div>
+                            </dialog>
+                        </>
+                    )}
+
+
+                </div>
+            </div >
+        </header >
+    );
+};
+
+export default Header;
