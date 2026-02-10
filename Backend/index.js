@@ -31,6 +31,7 @@ async function run() {
       .db("mini-e-commerce")
       .collection("products");
     const cartCollection = client.db("mini-e-commerce").collection("cart");
+    const orderCollection = client.db("mini-e-commerce").collection("order");
     // i am getting testimonial form here
     app.get("/testimonials", async (req, res) => {
       try {
@@ -93,6 +94,35 @@ async function run() {
         res.status(500).send({ error: "Server error" });
       }
     });
+    // orders are posted via this
+    app.post("/orders", async (req, res) => {
+      try {
+        const order = req.body;
+
+        if (!order.items || order.items.length === 0) {
+          return res.status(400).send({ message: "No items in order" });
+        }
+
+        const result = await orderCollection.insertOne(order);
+
+        res.send({
+          message: "Order placed successfully",
+          orderId: result.insertedId,
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Failed to place order" });
+      }
+    });
+    app.get("/orders", async (req, res) => {
+      try {
+        const result = await orderCollection.find({}).toArray(); // fetch all
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Failed to fetch testimonials" });
+      }
+    });
     // posting into cart about the products
     app.post("/cart", async (req, res) => {
       try {
@@ -145,6 +175,11 @@ async function run() {
         console.error(error);
         res.status(500).send({ error: "Failed to fetch cart" });
       }
+    });
+    // for deleting all the carts after deleting
+    app.delete("/cart", async (req, res) => {
+      await cartCollection.deleteMany({});
+      res.send({ message: "Cart cleared" });
     });
     app.patch("/cart/:id", async (req, res) => {
       try {

@@ -1,9 +1,14 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { Link, useLoaderData } from "react-router-dom";
 import ProductCard from "../Home/ProductCard";
+import Swal from "sweetalert2";
+import { AuthContext } from "../../Firebase/Authentication/AuthContext";
 
 const ProductDetails = () => {
+    const { cartIds, setCartIds } = useContext(AuthContext);
+
     const product = useLoaderData();
+    const isInCart = cartIds.includes(product._id);
 
     // Default size logic → prefer M, otherwise first available
     const [selectedSize, setSelectedSize] = useState(
@@ -16,7 +21,26 @@ const ProductDetails = () => {
 
     // Placeholder (connect real related products later)
     const relatedProducts = [];
+    const handleAddToCart = async () => {
+        try {
+            await fetch("http://localhost:3000/cart", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ productId: product._id }),
+            });
 
+            setCartIds(prev => [...prev, product._id]);
+
+            Swal.fire({
+                icon: "success",
+                title: "Added to cart",
+                timer: 1200,
+                showConfirmButton: false,
+            });
+        } catch (err) {
+            console.error("Add to cart failed", err);
+        }
+    };
     return (
         <div className="min-h-auto bg-gray-50">
             <div className="container mx-auto px-4 md:px-8 py-8">
@@ -116,36 +140,13 @@ const ProductDetails = () => {
 
                         {/* Quantity + Cart */}
                         <div className="mb-6 flex gap-4">
-                            <div className="flex items-center border border-gray-300 rounded">
-                                <button
-                                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                    className="px-4 py-2"
-                                >
-                                    −
-                                </button>
-                                <span className="px-6 py-2 border-x border-gray-300">
-                                    {quantity}
-                                </span>
-                                <button
-                                    onClick={() => setQuantity(quantity + 1)}
-                                    className="px-4 py-2"
-                                >
-                                    +
-                                </button>
-                            </div>
-
-                            <button className="flex-1 btn btn-primary btn-lg">
-                                Add to Cart
-                            </button>
-                        </div>
-
-                        {/* Wishlist / Share */}
-                        <div className="flex gap-3 mb-6 pb-6 border-b">
-                            <button className="btn btn-neutral btn-outline flex-1">
-                                Add to Wishlist
-                            </button>
-                            <button className="btn btn-neutral btn-outline">
-                                Share
+                            <button
+                                onClick={handleAddToCart}
+                                disabled={isInCart}
+                                className={`btn w-full mt-2 ${isInCart ? "btn-neutral cursor-not-allowed" : "btn-outline"
+                                    }`}
+                            >
+                                {isInCart ? "Added to Cart" : "Add to Cart"}
                             </button>
                         </div>
 

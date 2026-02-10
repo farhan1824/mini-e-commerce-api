@@ -1,60 +1,34 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useWishlist } from "../../Context/WishlistContext";
 import Swal from "sweetalert2";
 import { AuthContext } from "../../Firebase/Authentication/AuthContext";
 
 const ProductCard = ({ product }) => {
-    const { toggleWishlist, isWishlisted } = useWishlist();
-    const { loading } = useContext(AuthContext);
 
-    const inWishlist = isWishlisted(product._id);
+    const { cartIds, setCartIds } = useContext(AuthContext);
 
-    const [isInCart, setIsInCart] = useState(false);
+    const isInCart = cartIds.includes(product._id);
 
-    // Fetch cart to check if this product is already added
-    useEffect(() => {
-        const fetchCart = async () => {
-            try {
-                const res = await fetch("http://localhost:3000/cart/ids"); // returns array of productIds
-                const cartIds = await res.json();
-                setIsInCart(cartIds.includes(product._id));
-            } catch (err) {
-                console.error("Failed to fetch cart IDs", err);
-            }
-        };
-
-        fetchCart();
-    }, [product._id]);
-
-    const handleAddToCart = async (productId) => {
+    const handleAddToCart = async () => {
         try {
-            const res = await fetch("http://localhost:3000/cart", {
+            await fetch("http://localhost:3000/cart", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ productId }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ productId: product._id }),
             });
 
-            const data = await res.json();
+            setCartIds(prev => [...prev, product._id]);
 
-            if (data.message === "Added to cart") {
-                Swal.fire({
-                    position: "center",
-                    icon: "success",
-                    title: "Added to cart",
-                    showConfirmButton: false,
-                    timer: 1500,
-                });
-
-                setIsInCart(true); // mark as added
-            }
-        } catch (error) {
-            console.error("Add to cart failed", error);
+            Swal.fire({
+                icon: "success",
+                title: "Added to cart",
+                timer: 1200,
+                showConfirmButton: false,
+            });
+        } catch (err) {
+            console.error("Add to cart failed", err);
         }
     };
-
     return (
         <div className="bg-white rounded-lg overflow-hidden group text-black">
             {/* Image */}
@@ -71,26 +45,6 @@ const ProductCard = ({ product }) => {
                         -{product.discount}%
                     </div>
                 )}
-
-                {/* Wishlist */}
-                <button
-                    onClick={() => toggleWishlist(product)}
-                    className="absolute top-4 left-4 z-20 bg-white rounded-full p-2 shadow-md hover:shadow-lg transition"
-                >
-                    <svg
-                        className={`w-5 h-5 ${inWishlist ? "fill-red-500" : "text-gray-600"}`}
-                        fill={inWishlist ? "currentColor" : "none"}
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                        />
-                    </svg>
-                </button>
 
                 {/* Quick View */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
@@ -134,11 +88,11 @@ const ProductCard = ({ product }) => {
 
                 {/* Add to Cart */}
                 <button
-                    className="w-full btn btn-neutral btn-outline"
+                    onClick={handleAddToCart}
                     disabled={isInCart}
-                    onClick={() => handleAddToCart(product._id)}
+                    className="w-full"
                 >
-                    {isInCart ? "Added to Cart" : "Add to Cart"}
+                    {isInCart ? <p className="btn btn-neutral w-full mt-2">Added to Cart</p> : <p className="btn btn-outline w-full mt-2">Add to Cart</p>}
                 </button>
             </div>
         </div>

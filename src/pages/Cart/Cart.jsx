@@ -160,9 +160,9 @@ const Cart = () => {
                                 <span>${total.toFixed(2)}</span>
                             </div>
 
-                            <button className="w-full btn btn-primary btn-lg mb-3">
+                            <Link to="/order" className="w-full btn btn-primary btn-lg mb-3">
                                 Proceed to Checkout
-                            </button>
+                            </Link>
 
                             <Link to="/shop" className="w-full btn btn-outline">
                                 Continue Shopping

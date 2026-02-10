@@ -3,10 +3,12 @@ import RootLayout from '../layouts/RootLayout';
 import Shop from '../pages/Shop/Shop';
 import ProductDetails from '../pages/ProductDetails/ProductDetails';
 import Cart from '../pages/Cart/Cart';
-import Wishlist from '../pages/Wishlist/Wishlist';
 import Signin from '../pages/LoginSignin/Signin';
 import Home from '../Pages/Home/Home';
 import CategoryProductDetails from '../pages/ProductDetails/CategoryProductDetails';
+import Profile from '../pages/Profile/Profile';
+import { Order } from '../pages/Shop/Order';
+import OrderList from '../pages/Shop/OrderList';
 
 export const router = createBrowserRouter([
     {
@@ -20,6 +22,19 @@ export const router = createBrowserRouter([
             {
                 path: 'shop',
                 Component: Shop,
+            },
+            {
+                path: 'profile',
+                Component: Profile,
+            },
+            {
+                path: 'order',
+                Component: Order,
+            },
+            {
+                path: 'orderlist',
+                loader: () => fetch("http://localhost:3000/orders"),
+                Component: OrderList,
             },
             {
                 path: 'products',
@@ -55,10 +70,7 @@ export const router = createBrowserRouter([
                 path: 'register',
                 Component: Signin,
             },
-            {
-                path: 'wishlist',
-                Component: Wishlist,
-            },
+
         ],
     },
 ]);

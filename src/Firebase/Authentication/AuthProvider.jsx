@@ -12,7 +12,7 @@ import { auth } from "../Firebase.init";
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-
+    const [cartIds, setCartIds] = useState([]);
     // Create user
     const createUser = (email, password) => {
         setLoading(true);
@@ -28,7 +28,9 @@ export const AuthProvider = ({ children }) => {
     // Logout user
     const Logout = () => {
         setLoading(true);
+        setCartIds([])
         return signOut(auth);
+
     };
 
     // Update display name & photo
@@ -44,8 +46,25 @@ export const AuthProvider = ({ children }) => {
 
     // Auth state observer
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
+
+            // fetch cart only when user exists
+            if (currentUser) {
+                try {
+                    const res = await fetch("http://localhost:3000/cart");
+                    const data = await res.json();
+
+                    // store only product IDs
+                    const ids = data.map(item => item.product._id);
+                    setCartIds(ids);
+                } catch (err) {
+                    console.error("Failed to fetch cart", err);
+                }
+            } else {
+                setCartIds([]);
+            }
+
             setLoading(false);
         });
 
@@ -60,6 +79,8 @@ export const AuthProvider = ({ children }) => {
         Logout,
         DisplayUser,
         setLoading,
+        cartIds,
+        setCartIds,
     };
 
     return (
