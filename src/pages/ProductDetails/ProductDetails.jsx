@@ -10,24 +10,30 @@ const ProductDetails = () => {
     const product = useLoaderData();
     const isInCart = cartIds.includes(product._id);
 
-    // Default size logic → prefer M, otherwise first available
-    const [selectedSize, setSelectedSize] = useState(
-        product?.sizes?.includes("M") ? "M" : product?.sizes?.[0]
-    );
-
-    const [quantity, setQuantity] = useState(1);
-
     if (!product) return null;
 
     // Placeholder (connect real related products later)
     const relatedProducts = [];
     const handleAddToCart = async () => {
         try {
-            await fetch("http://localhost:3000/cart", {
+            const quantity = 1;
+
+            const res = await fetch("http://localhost:3000/cart", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productId: product._id }),
+                body: JSON.stringify({ productId: product._id, quantity }),
             });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Stock Out",
+                    text: data.error,
+                });
+                return;
+            }
 
             setCartIds(prev => [...prev, product._id]);
 
@@ -39,6 +45,11 @@ const ProductDetails = () => {
             });
         } catch (err) {
             console.error("Add to cart failed", err);
+            Swal.fire({
+                icon: "error",
+                title: "Add to cart failed",
+                text: "Something went wrong!",
+            });
         }
     };
     return (
@@ -114,28 +125,6 @@ const ProductDetails = () => {
                             <p className="text-gray-600 mb-6 leading-relaxed">
                                 {product.description}
                             </p>
-                        )}
-
-                        {/* Sizes */}
-                        {product.sizes && (
-                            <div className="mb-6">
-                                <h3 className="font-semibold text-gray-900 mb-3">Size</h3>
-                                <div className="flex gap-2 flex-wrap">
-                                    {product.sizes.map((size) => (
-                                        <button
-                                            key={size}
-                                            onClick={() => setSelectedSize(size)}
-                                            className={`min-w-12 px-4 py-2 rounded border-2 text-sm font-semibold transition
-                        ${selectedSize === size
-                                                    ? "border-gray-900 bg-gray-900 text-white"
-                                                    : "border-gray-300 text-gray-900 hover:border-gray-900"
-                                                }`}
-                                        >
-                                            {size}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
                         )}
 
                         {/* Quantity + Cart */}

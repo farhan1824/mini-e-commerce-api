@@ -45,24 +45,13 @@ async function run() {
     // i am getting Product from here
     app.get("/products", async (req, res) => {
       try {
-        const result = await productCollection.find({}).toArray(); // fetch all
-        res.send(result);
-      } catch (error) {
-        console.error(error);
-        res.status(500).send({ message: "Failed to fetch testimonials" });
-      }
-    });
-    app.get("/products", async (req, res) => {
-      try {
         const { category } = req.query;
-
         let query = {};
 
         if (category) {
-          // Trim whitespace & match exactly, case-insensitive
-          const cleanCategory = category.trim();
-          query = { category: { $regex: `^${cleanCategory}$`, $options: "i" } };
-          console.log("Querying by category:", cleanCategory);
+          query = {
+            category: { $regex: `^${category.trim()}$`, $options: "i" },
+          };
         }
 
         const result = await productCollection.find(query).toArray();
@@ -92,6 +81,75 @@ async function run() {
       } catch (error) {
         console.error(error);
         res.status(500).send({ error: "Server error" });
+      }
+    });
+    // Delete the products
+    app.delete("/products/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const result = productCollection.deleteOne({ _id: new ObjectId(id) });
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ error: "Server error" });
+      }
+    });
+    // showing stocks by id in the backend
+    app.get("/products/:id/stocks", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await productCollection.findOne(query); // fetch all
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Failed to fetch testimonials" });
+      }
+    });
+    // getting the product stocks
+    app.patch("/products/:id/stocks", async (req, res) => {
+      const { id } = req.params;
+      const { stocks } = req.body;
+
+      const result = await productCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { stocks: Number(stocks) } },
+      );
+
+      res.send(result);
+    });
+
+    // Update the product one at a time
+    app.put("/products/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const updatedProduct = req.body;
+
+        const result = await productCollection.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $set: {
+              name: updatedProduct.name,
+              price: Number(updatedProduct.price),
+              originalPrice: Number(updatedProduct.originalPrice),
+              discount: Number(updatedProduct.discount),
+              image: updatedProduct.image,
+              rating: Number(updatedProduct.rating),
+              reviews: Number(updatedProduct.reviews),
+              category: updatedProduct.category,
+              stocks: Number(updatedProduct.stocks),
+            },
+          },
+        );
+
+        if (result.matchedCount === 0) {
+          return res.status(404).send({ message: "Product not found" });
+        }
+
+        res.send({ message: "Product updated successfully" });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ error: "Failed to update product" });
       }
     });
     // orders are posted via this
@@ -125,31 +183,56 @@ async function run() {
     });
     // posting into cart about the products
     app.post("/cart", async (req, res) => {
-      try {
-        const { productId } = req.body;
+      const { productId, quantity } = req.body;
 
-        if (!ObjectId.isValid(productId)) {
-          return res.status(400).send({ error: "Invalid product ID" });
-        }
+      if (!ObjectId.isValid(productId)) {
+        return res.status(400).send({ error: "Invalid product id" });
+      }
 
-        const exists = await cartCollection.findOne({
-          productId: new ObjectId(productId),
+      if (quantity <= 0) {
+        return res.status(400).send({ error: "Quantity must be at least 1" });
+      }
+
+      //  Get product
+      const product = await productCollection.findOne({
+        _id: new ObjectId(productId),
+      });
+
+      if (!product) {
+        return res.status(404).send({ error: "Product not found" });
+      }
+
+      //  Get existing cart item
+      const existingCart = await cartCollection.findOne({
+        productId: new ObjectId(productId),
+      });
+
+      const finalQty = existingCart
+        ? existingCart.quantity + quantity
+        : quantity;
+
+      // Compare with stock (THIS is the rule)
+      if (finalQty > Number(product.stocks)) {
+        return res.status(400).json({
+          error: `Only ${product.stocks} items available in stock`,
         });
+      }
 
-        if (exists) {
-          return res.send({ message: "Already in cart" });
-        }
-
+      //  Insert or update cart
+      if (existingCart) {
+        await cartCollection.updateOne(
+          { productId: new ObjectId(productId) },
+          { $set: { quantity: finalQty } },
+        );
+      } else {
         await cartCollection.insertOne({
           productId: new ObjectId(productId),
-          quantity: 1,
+          quantity,
           createdAt: new Date(),
         });
-
-        res.status(201).send({ message: "Added to cart" });
-      } catch (error) {
-        res.status(500).send({ error: "Failed to add to cart" });
       }
+
+      res.send({ success: true });
     });
     // i am getting the product via product id in cart
     app.get("/cart", async (req, res) => {
@@ -186,38 +269,49 @@ async function run() {
         const { id } = req.params;
         const { action } = req.body; // "inc" | "dec"
 
-        if (!ObjectId.isValid(id)) {
-          return res.status(400).send({ error: "Invalid cart ID" });
+        if (!ObjectId.isValid(id))
+          return res.status(400).json({ error: "Invalid cart ID" });
+        if (!["inc", "dec"].includes(action))
+          return res.status(400).json({ error: "Invalid action" });
+
+        const cartItem = await cartCollection.findOne({
+          _id: new ObjectId(id),
+        });
+        if (!cartItem)
+          return res.status(404).json({ error: "Cart item not found" });
+
+        // Get the corresponding product
+        const product = await productCollection.findOne({
+          _id: cartItem.productId,
+        });
+        if (!product)
+          return res.status(404).json({ error: "Product not found" });
+
+        // Calculate new quantity
+        const newQty =
+          action === "inc" ? cartItem.quantity + 1 : cartItem.quantity - 1;
+
+        // Prevent going above stock
+        if (newQty > Number(product.stocks)) {
+          return res
+            .status(400)
+            .json({ error: `Only ${product.stocks} items available in stock` });
         }
 
-        if (!["inc", "dec"].includes(action)) {
-          return res.status(400).send({ error: "Invalid action" });
+        // Prevent going below 1
+        if (newQty < 1) {
+          return res.status(400).json({ error: "Minimum quantity is 1" });
         }
-
-        const item = await cartCollection.findOne({ _id: new ObjectId(id) });
-
-        if (!item) {
-          return res.status(404).send({ error: "Cart item not found" });
-        }
-
-        // prevent quantity going below 1
-        if (action === "dec" && item.quantity <= 1) {
-          return res.send({ message: "Minimum quantity reached" });
-        }
-
-        const change = action === "inc" ? 1 : -1;
 
         await cartCollection.updateOne(
           { _id: new ObjectId(id) },
-          { $inc: { quantity: change } },
+          { $set: { quantity: newQty } },
         );
 
-        res.send({
-          message:
-            action === "inc" ? "Quantity increased" : "Quantity decreased",
-        });
-      } catch (error) {
-        res.status(500).send({ error: "Failed to update quantity" });
+        res.status(200).json({ success: true, quantity: newQty });
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to update cart item" });
       }
     });
     // DELETE item form cart

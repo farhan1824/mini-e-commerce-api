@@ -11,12 +11,27 @@ const ProductCard = ({ product }) => {
 
     const handleAddToCart = async () => {
         try {
-            await fetch("http://localhost:3000/cart", {
+            const quantity = 1; // default quantity
+
+            const res = await fetch("http://localhost:3000/cart", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productId: product._id }),
+                body: JSON.stringify({ productId: product._id, quantity }),
             });
 
+            const data = await res.json();
+            console.log(res);
+            if (!res.ok) {
+                // Backend rejected due to stock limits
+                Swal.fire({
+                    icon: "error",
+                    title: "Cannot add to cart",
+                    text: data.error,
+                });
+                return; // do NOT update cartIds
+            }
+
+            // Only update cartIds if backend succeeded
             setCartIds(prev => [...prev, product._id]);
 
             Swal.fire({
@@ -27,6 +42,11 @@ const ProductCard = ({ product }) => {
             });
         } catch (err) {
             console.error("Add to cart failed", err);
+            Swal.fire({
+                icon: "error",
+                title: "Add to cart failed",
+                text: "Something went wrong!",
+            });
         }
     };
     return (
