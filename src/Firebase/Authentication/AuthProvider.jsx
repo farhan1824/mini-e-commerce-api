@@ -22,7 +22,10 @@ export const AuthProvider = ({ children }) => {
     // Login user
     const LoginUser = (email, password) => {
         setLoading(true);
-        return signInWithEmailAndPassword(auth, email, password);
+        return signInWithEmailAndPassword(auth, email, password)
+            .finally(() => {
+                setLoading(false);
+            });
     };
 
     // Logout user

@@ -1,12 +1,12 @@
 import React, { use } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../Firebase/Authentication/AuthContext";
 import Swal from "sweetalert2";
 import { CiDeliveryTruck } from "react-icons/ci";
 
 const Header = () => {
     const { user, Logout, loading, LoginUser, cartitemholder } = use(AuthContext)
-
+    const navigate = useNavigate()
     console.log(user);
     const handelogin = (e) => {
         e.preventDefault();
@@ -16,15 +16,27 @@ const Header = () => {
         const password = form.password.value;
         console.log(email, password);
         LoginUser(email, password)
-            .then(() => {
+            .then((result) => {
                 Swal.fire({
-                    position: "center",
-                    icon: "success",
-                    title: "Login SuccessFully",
-                    showConfirmButton: false,
-                    timer: 1500
+                    icon: 'success',
+                    title: 'Login Successful',
+                    text: 'Welcome back!',
+                    timer: 2000,
+                    showConfirmButton: false
                 });
+
+                form.reset();
+                navigate('/');
             })
+            .catch((error) => {
+                document.getElementById("my_modal_3").close();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Login Failed',
+                    text: error.message
+                });
+            });
+
 
     }
     const handelLogout = () => {
@@ -55,31 +67,33 @@ const Header = () => {
                 {/* LEFT */}
                 <div className="flex-1">
                     {/* Mobile menu */}
-                    <div className="dropdown lg:hidden">
-                        <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
-                            <svg
-                                className="h-5 w-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                    {
+                        user ? <div className="dropdown lg:hidden">
+                            <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
+                                <svg
+                                    className="h-5 w-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M4 6h16M4 12h16M4 18h16"
+                                    />
+                                </svg>
+                            </div>
+                            <ul
+                                tabIndex={0}
+                                className="menu menu-sm dropdown-content bg-base-100 rounded-box mt-3 w-52 p-2 shadow"
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4 6h16M4 12h16M4 18h16"
-                                />
-                            </svg>
-                        </div>
-                        <ul
-                            tabIndex={0}
-                            className="menu menu-sm dropdown-content bg-base-100 rounded-box mt-3 w-52 p-2 shadow"
-                        >
-                            <li><Link to="/shop">Shop by Category</Link></li>
-                            <li><Link to="/shop">New In</Link></li>
-                            <li><Link to="/shop">Sale</Link></li>
-                        </ul>
-                    </div>
+                                <li><Link to="/cart">cart</Link></li>
+                                <li><Link to="/orderlist">Orders</Link></li>
+                            </ul>
+                        </div> : <></>
+                    }
+
 
                     {/* Logo */}
                     <Link to="/" className="btn btn-ghost text-2xl font-bold">
@@ -87,37 +101,34 @@ const Header = () => {
                     </Link>
                 </div>
 
-                {/* CENTER (desktop) */}
-                <div className="hidden lg:flex">
-                    <ul className="menu menu-horizontal gap-8">
-                        <li><Link to="/shop">Shop</Link></li>
-                    </ul>
-                </div>
-
                 {/* RIGHT */}
                 <div className="flex-none flex gap-2">
-                    <Link to="/orderlist" className="btn btn-ghost btn-circle">
-                        <CiDeliveryTruck className="h-8 w-8" />
-                    </Link>
+                    {
+                        user ? <Link to="/orderlist" className="btn btn-ghost btn-circle">
+                            <CiDeliveryTruck className="h-8 w-8" />
+                        </Link> : <></>
+                    }
 
-                    {/* Cart */}
-                    <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
-                        <Link to="/cart" className="indicator">
-                            <svg
-                                className="h-5 w-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                                />
-                            </svg>
-                        </Link>
-                    </div>
+                    {
+                        user ? <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
+                            <Link to="/cart" className="indicator">
+                                <svg
+                                    className="h-5 w-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                                    />
+                                </svg>
+                            </Link>
+                        </div> : <></>
+                    }
+
                     {user ? (
                         <div className="dropdown dropdown-end">
                             <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">

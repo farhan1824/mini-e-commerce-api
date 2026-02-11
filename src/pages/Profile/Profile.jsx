@@ -429,16 +429,10 @@ const AdminDashboard = () => {
                                                 <div className="flex gap-2">
                                                     <button
                                                         onClick={() => handleEdit(p)}
-                                                        className="btn btn-sm btn-secondary flex-1"
+                                                        className="btn btn-info btn-sm flex-1"
                                                     >
                                                         Edit
                                                     </button>
-                                                    {/* <button
-                                                        onClick={() => handleStockUpdate(p._id)}
-                                                        className="btn btn-sm btn-warning flex-1"
-                                                    >
-                                                        Stock
-                                                    </button> */}
                                                     <button
                                                         onClick={() => handleStockUpdate(p)}
                                                         className="btn btn-sm btn-warning flex-1"
