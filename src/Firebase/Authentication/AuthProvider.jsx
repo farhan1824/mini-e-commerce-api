@@ -13,6 +13,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [cartIds, setCartIds] = useState([]);
+    const [dbUser, setDbUser] = useState(null);
     // Create user
     const createUser = (email, password) => {
         setLoading(true);
@@ -55,6 +56,10 @@ export const AuthProvider = ({ children }) => {
             // fetch cart only when user exists
             if (currentUser) {
                 try {
+                    const dbres = await fetch(`http://localhost:3000/users/${currentUser.email}`);
+                    const dbdata = await dbres.json();
+                    // Store MongoDB _id
+                    setDbUser(dbdata);
                     const res = await fetch("http://localhost:3000/cart");
                     const data = await res.json();
 
@@ -62,9 +67,11 @@ export const AuthProvider = ({ children }) => {
                     const ids = data.map(item => item.product._id);
                     setCartIds(ids);
                 } catch (err) {
+                    setDbUser(null);
                     console.error("Failed to fetch cart", err);
                 }
             } else {
+                setDbUser(null);
                 setCartIds([]);
             }
 
@@ -73,7 +80,6 @@ export const AuthProvider = ({ children }) => {
 
         return () => unsubscribe();
     }, []);
-
     const authInfo = {
         user,
         loading,
@@ -84,6 +90,7 @@ export const AuthProvider = ({ children }) => {
         setLoading,
         cartIds,
         setCartIds,
+        dbUser
     };
 
     return (

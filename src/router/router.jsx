@@ -9,6 +9,7 @@ import CategoryProductDetails from '../pages/ProductDetails/CategoryProductDetai
 import Profile from '../pages/Profile/Profile';
 import { Order } from '../pages/Shop/Order';
 import OrderList from '../pages/Shop/OrderList';
+import PrivateRoute from '../Firebase/Authentication/PrivateRoute';
 
 export const router = createBrowserRouter([
     {
@@ -25,7 +26,10 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'profile',
-                Component: Profile,
+                element: <PrivateRoute>
+                    <Profile></Profile>
+                </PrivateRoute>,
+                // Component: Profile,
             },
             {
                 path: 'order',
@@ -33,15 +37,17 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'orderlist',
+                element: <PrivateRoute>
+                    <OrderList></OrderList>
+                </PrivateRoute>,
                 loader: () => fetch("http://localhost:3000/orders"),
-                Component: OrderList,
+                // Component: OrderList,
             },
             {
                 path: 'products',
                 loader: async ({ request }) => {
                     const url = new URL(request.url);
                     const category = url.searchParams.get("category");
-
                     const queryParam = category ? `?category=${encodeURIComponent(category)}` : '';
                     const res = await fetch(`http://localhost:3000/products${queryParam}`);
                     if (!res.ok) throw new Error("Failed to fetch products");
@@ -63,8 +69,12 @@ export const router = createBrowserRouter([
             ,
             {
                 path: 'cart',
+                element:
+                    <PrivateRoute>
+                        <Cart></Cart>
+                    </PrivateRoute>,
                 // loader: () => fetch(`http://localhost:3000/cart`),
-                Component: Cart,
+                // Component: Cart,
             },
             {
                 path: 'register',

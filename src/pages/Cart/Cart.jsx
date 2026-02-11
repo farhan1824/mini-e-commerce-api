@@ -1,31 +1,29 @@
-import React, { use, useEffect, useState } from "react";
-import { Link, useLoaderData } from "react-router-dom";
-import { AuthContext } from "../../Firebase/Authentication/AuthContext";
+import React, { useContext, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 const Cart = () => {
-    const { loading, setLoading, cartitemholder } = use(AuthContext);
     const [cartItems, setCartItems] = useState([]);
-    // Create a reusable function to fetch cart
+    const [cartLoading, setCartLoading] = useState(false);
+
+    // Fetch cart from API
     const fetchCart = async () => {
         try {
-            setLoading(true);
+            setCartLoading(true);
             const res = await fetch("http://localhost:3000/cart");
-            // const res = useLoaderData();
             const data = await res.json();
             setCartItems(data);
         } catch (error) {
             console.error("Failed to fetch cart", error);
         } finally {
-            setLoading(false);
+            setCartLoading(false);
         }
     };
 
-    // Fetch cart on mount
     useEffect(() => {
         fetchCart();
     }, []);
 
-    // Update quantity and refresh cart
+    // Update quantity
     const updateQuantity = async (id, action) => {
         try {
             await fetch(`http://localhost:3000/cart/${id}`, {
@@ -33,23 +31,23 @@ const Cart = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ action }),
             });
-
-            fetchCart();
+            fetchCart(); // refresh cart after update
         } catch (err) {
             console.error("Failed to update quantity", err);
         }
     };
-    const handelDelete = (id) => {
+
+    // Delete item
+    const handleDelete = async (id) => {
         try {
-            fetch(`http://localhost:3000/cart/${id}`, {
-                method: "DELETE",
-            });
-            setCartItems(prev => prev.filter(item => item._id !== id));
+            await fetch(`http://localhost:3000/cart/${id}`, { method: "DELETE" });
+            setCartItems((prev) => prev.filter((item) => item._id !== id));
         } catch (err) {
             console.error("Failed to remove cart item", err);
         }
-    }
-    // calculations
+    };
+
+    // Calculations
     const subtotal = cartItems.reduce(
         (sum, item) => sum + item.product.price * item.quantity,
         0
@@ -58,7 +56,7 @@ const Cart = () => {
     const tax = subtotal * 0.1;
     const total = subtotal + shipping + tax;
 
-    if (loading) {
+    if (cartLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center text-lg">
                 <span className="loading loading-spinner loading-xs"></span>
@@ -123,7 +121,10 @@ const Cart = () => {
                                             >
                                                 +
                                             </button>
-                                            <button onClick={() => handelDelete(item._id)} className="btn btn-outline btn-error">
+                                            <button
+                                                onClick={() => handleDelete(item._id)}
+                                                className="btn btn-outline btn-error"
+                                            >
                                                 Remove
                                             </button>
                                         </div>
@@ -160,7 +161,10 @@ const Cart = () => {
                                 <span>${total.toFixed(2)}</span>
                             </div>
 
-                            <Link to="/order" className="w-full btn btn-primary btn-lg mb-3">
+                            <Link
+                                to="/order"
+                                className="w-full btn btn-primary btn-lg mb-3"
+                            >
                                 Proceed to Checkout
                             </Link>
 

@@ -5,34 +5,48 @@ import { AuthContext } from "../../Firebase/Authentication/AuthContext";
 
 const ProductCard = ({ product }) => {
 
-    const { cartIds, setCartIds } = useContext(AuthContext);
+    const { cartIds, setCartIds, user } = useContext(AuthContext);
 
     const isInCart = cartIds.includes(product._id);
 
     const handleAddToCart = async () => {
         try {
-            const quantity = 1; // default quantity
+            if (!user) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Login required",
+                    text: "Please login to add items to your cart",
+                });
+                navigate("/");
+                return;
+            }
 
             const res = await fetch("http://localhost:3000/cart", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productId: product._id, quantity }),
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    productId: product._id,
+                    quantity: 1,
+                }),
             });
 
             const data = await res.json();
-            console.log(res);
+
             if (!res.ok) {
-                // Backend rejected due to stock limits
                 Swal.fire({
                     icon: "error",
-                    title: "Cannot add to cart",
-                    text: data.error,
+                    title: "Stock out",
+                    text: data?.error || "Unable to add item",
                 });
-                return; // do NOT update cartIds
+                return;
             }
 
-            // Only update cartIds if backend succeeded
-            setCartIds(prev => [...prev, product._id]);
+            // prevent duplicate IDs
+            setCartIds(prev =>
+                prev.includes(product._id) ? prev : [...prev, product._id]
+            );
 
             Swal.fire({
                 icon: "success",

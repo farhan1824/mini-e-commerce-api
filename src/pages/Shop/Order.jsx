@@ -1,15 +1,18 @@
-import React from 'react'
+import React, { use } from 'react'
 import useFetchData from '../Hooks/UseFetchData';
 import { useNavigate } from 'react-router';
 import Swal from 'sweetalert2';
+import { AuthContext } from '../../Firebase/Authentication/AuthContext';
 
 export const Order = () => {
     const { data: cartItems, loading, error } = useFetchData("cart");
-    // console.log(cartItems);
+    const { dbUser } = use(AuthContext)
+    console.log(dbUser);
     const navigate = useNavigate();
     const handleOrders = async () => {
         try {
             const orderData = {
+                userId: dbUser._id,
                 items: cartItems.map(item => ({
                     productId: item.product._id,
                     name: item.product.name,
@@ -77,9 +80,9 @@ export const Order = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 text-black p-6">
+            <h1 className='text-5xl text-center font-bold mb-6'>The Order Summary</h1>
             <div className="max-w-4xl mx-auto bg-white rounded-lg p-6">
-                <h1 className="text-3xl font-bold mb-6">Order Summary</h1>
-
+                <h1 className="text-3xl font-bold mb-6">Order holder :{dbUser.name}</h1>
                 <div className="space-y-6">
                     {cartItems.map((item) => (
                         <div
@@ -128,6 +131,9 @@ export const Order = () => {
 
                 <button onClick={handleOrders} className="btn btn-primary w-full mt-6">
                     Place Order
+                </button>
+                <button onClick={() => navigate(-1)} className="btn btn-neutral btn-outline w-full mt-6">
+                    Go Back ?
                 </button>
             </div>
         </div>

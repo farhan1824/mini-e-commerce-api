@@ -8,40 +8,46 @@ import { useNavigate } from "react-router";
 const Signin = () => {
     const { createUser, DisplayUser } = use(AuthContext)
     const nav = useNavigate();
-    const handelRegistration = (e) => {
+    const handelRegistration = async (e) => {
         e.preventDefault();
 
         const form = e.target;
         const email = form.email.value;
         const password = form.password.value;
         const name = form.name.value;
-        const photoUrl = form.photoUrl.value
+        const photoUrl = form.photoUrl.value;
 
-        createUser(email, password)
-            .then((result) => {
-                return DisplayUser(
-                    result.user,
-                    name,
-                    photoUrl
-                );
-            })
-            .then(() => {
-                Swal.fire({
-                    title: "Registered Successfully 🎉",
-                    text: "Your account has been created",
-                    icon: "success",
-                    confirmButtonText: "Continue"
-                }).then(() => {
-                    nav("/");
-                });
-            })
-            .catch((error) => {
-                Swal.fire({
-                    icon: "error",
-                    title: "Oops...",
-                    text: error.message || "Something went wrong"
-                });
+        try {
+            const result = await createUser(email, password);
+
+            await DisplayUser(result.user, name, photoUrl);
+
+            const registrationData = { email, name, photoUrl };
+            const res = await fetch("http://localhost:3000/users", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(registrationData),
             });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.message || "Failed to add user");
+            }
+
+            Swal.fire({
+                title: "Registered Successfully 🎉",
+                text: "Your account has been created",
+                icon: "success",
+                confirmButtonText: "Continue",
+            }).then(() => nav("/"));
+        } catch (error) {
+            Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: error.message || "Something went wrong",
+            });
+        }
     };
 
     return (

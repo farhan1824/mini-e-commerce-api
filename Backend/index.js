@@ -24,6 +24,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
+    const userCollection = client.db("mini-e-commerce").collection("users");
     const tesimonialCollection = client
       .db("mini-e-commerce")
       .collection("testimonials");
@@ -32,6 +33,33 @@ async function run() {
       .collection("products");
     const cartCollection = client.db("mini-e-commerce").collection("cart");
     const orderCollection = client.db("mini-e-commerce").collection("order");
+    // posting the users
+    app.post("/users", async (req, res) => {
+      try {
+        const user = req.body;
+        const result = await userCollection.insertOne(user);
+
+        res.send({
+          message: "User Has been added successfully",
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Failed to place order" });
+      }
+    });
+    // getting the id via email
+    // GET /users/:email
+    app.get("/users/:email", async (req, res) => {
+      try {
+        const email = req.params.email;
+        const user = await userCollection.findOne({ email });
+        if (!user) return res.status(404).json({ message: "User not found" });
+        res.json(user);
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Failed to fetch user" });
+      }
+    });
     // i am getting testimonial form here
     app.get("/testimonials", async (req, res) => {
       try {

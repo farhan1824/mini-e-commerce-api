@@ -1,27 +1,61 @@
-import React, { useContext, useState } from "react";
-import { Link, useLoaderData } from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
+import { Link, useLoaderData, useNavigate } from "react-router-dom";
 import ProductCard from "../Home/ProductCard";
 import Swal from "sweetalert2";
 import { AuthContext } from "../../Firebase/Authentication/AuthContext";
 
 const ProductDetails = () => {
-    const { cartIds, setCartIds } = useContext(AuthContext);
-
+    const { cartIds, setCartIds, user } = useContext(AuthContext);
+    const navigate = useNavigate();
     const product = useLoaderData();
     const isInCart = cartIds.includes(product._id);
 
     if (!product) return null;
 
     // Placeholder (connect real related products later)
-    const relatedProducts = [];
+    const [relatedProducts, setRelatedProducts] = useState([]);
+    useEffect(() => {
+        if (!product?.category) return;
+
+        const fetchRelatedProducts = async () => {
+            try {
+                const res = await fetch(
+                    `http://localhost:3000/products?category=${product.category}`
+                );
+                const data = await res.json();
+
+                // remove current product from related list
+                const filtered = data.filter(p => p._id !== product._id);
+
+                setRelatedProducts(filtered);
+            } catch (error) {
+                console.error("Failed to fetch related products", error);
+            }
+        };
+
+        fetchRelatedProducts();
+    }, [product]);
     const handleAddToCart = async () => {
         try {
-            const quantity = 1;
+            if (!user) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Login required",
+                    text: "Please login to add items to your cart",
+                });
+                navigate("/");
+                return;
+            }
 
             const res = await fetch("http://localhost:3000/cart", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productId: product._id, quantity }),
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    productId: product._id,
+                    quantity: 1,
+                }),
             });
 
             const data = await res.json();
@@ -29,13 +63,16 @@ const ProductDetails = () => {
             if (!res.ok) {
                 Swal.fire({
                     icon: "error",
-                    title: "Stock Out",
-                    text: data.error,
+                    title: "Stock out",
+                    text: data?.error || "Unable to add item",
                 });
                 return;
             }
 
-            setCartIds(prev => [...prev, product._id]);
+            // prevent duplicate IDs
+            setCartIds(prev =>
+                prev.includes(product._id) ? prev : [...prev, product._id]
+            );
 
             Swal.fire({
                 icon: "success",
@@ -132,10 +169,9 @@ const ProductDetails = () => {
                             <button
                                 onClick={handleAddToCart}
                                 disabled={isInCart}
-                                className={`btn w-full mt-2 ${isInCart ? "btn-neutral cursor-not-allowed" : "btn-outline"
-                                    }`}
+                                className="w-full"
                             >
-                                {isInCart ? "Added to Cart" : "Add to Cart"}
+                                {isInCart ? <p className="btn btn-neutral w-full mt-2">Added to Cart</p> : <p className="btn btn-outline w-full mt-2">Add to Cart</p>}
                             </button>
                         </div>
 
