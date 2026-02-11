@@ -10,6 +10,8 @@ import Profile from '../pages/Profile/Profile';
 import { Order } from '../pages/Shop/Order';
 import OrderList from '../pages/Shop/OrderList';
 import PrivateRoute from '../Firebase/Authentication/PrivateRoute';
+import SuperUser from '../pages/Profile/SuperUser';
+import SuperUserRoute from '../Firebase/Authentication/SuperUserRoute';
 
 export const router = createBrowserRouter([
     {
@@ -34,6 +36,12 @@ export const router = createBrowserRouter([
             {
                 path: 'order',
                 Component: Order,
+            },
+            {
+                path: 'superuser',
+                element: <SuperUserRoute>
+                    <SuperUser></SuperUser>
+                </SuperUserRoute>
             },
             {
                 path: 'orderlist',

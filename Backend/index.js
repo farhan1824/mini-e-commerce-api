@@ -60,6 +60,28 @@ async function run() {
         res.status(500).json({ message: "Failed to fetch user" });
       }
     });
+    // i am getting users form here
+    app.get("/users", async (req, res) => {
+      try {
+        const result = await userCollection.find({}).toArray(); // fetch all
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Failed to fetch testimonials" });
+      }
+    });
+    // promoting the user to admin
+    app.patch("/users/promote/:id", async (req, res) => {
+      const { id } = req.params;
+      const { role } = req.body;
+
+      const result = await userCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { role } },
+      );
+
+      res.send(result);
+    });
     // i am getting testimonial form here
     app.get("/testimonials", async (req, res) => {
       try {

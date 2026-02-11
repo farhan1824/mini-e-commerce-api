@@ -22,7 +22,7 @@ const Signin = () => {
 
             await DisplayUser(result.user, name, photoUrl);
 
-            const registrationData = { email, name, photoUrl };
+            const registrationData = { email, name, photoUrl, role: "customer" };
             const res = await fetch("http://localhost:3000/users", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
