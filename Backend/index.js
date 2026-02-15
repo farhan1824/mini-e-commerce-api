@@ -210,8 +210,35 @@ async function run() {
         if (!order.items || order.items.length === 0) {
           return res.status(400).send({ message: "No items in order" });
         }
+        const itemsWithDetails = await Promise.all(
+          order.items.map(async (item) => {
+            // finding the product accroding to id
+            const product = await productCollection.findOne({
+              _id: new ObjectId(item.productId),
+            });
 
-        const result = await orderCollection.insertOne(order);
+            if (!product) {
+              throw new Error(`Product ${item.productId} not found`);
+            }
+
+            return {
+              productId: product._id,
+              name: product.name,
+              category: product.category,
+              price: product.price,
+              image: product.image,
+              quantity: item.quantity,
+            };
+          }),
+        );
+
+        const finalOrder = {
+          ...order,
+          items: itemsWithDetails,
+          createdAt: new Date(),
+        };
+
+        const result = await orderCollection.insertOne(finalOrder);
 
         res.send({
           message: "Order placed successfully",

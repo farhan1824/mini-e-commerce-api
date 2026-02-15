@@ -14,13 +14,15 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [cartIds, setCartIds] = useState([]);
     const [dbUser, setDbUser] = useState(null);
+    const [token, setToken] = useState(localStorage.getItem("token") || null);
+
     // Create user
     const createUser = (email, password) => {
         setLoading(true);
         return createUserWithEmailAndPassword(auth, email, password);
     };
 
-    // Login user
+    // Login user with Firebase
     const LoginUser = (email, password) => {
         setLoading(true);
         return signInWithEmailAndPassword(auth, email, password)
@@ -29,12 +31,24 @@ export const AuthProvider = ({ children }) => {
             });
     };
 
+    // Login user with JWT (for backend authentication)
+    const loginWithJWT = (jwtToken, userData) => {
+        setToken(jwtToken);
+        localStorage.setItem("token", jwtToken);
+        localStorage.setItem("user", JSON.stringify(userData));
+        setDbUser(userData);
+        setLoading(false);
+    };
+
     // Logout user
     const Logout = () => {
         setLoading(true);
-        setCartIds([])
+        setCartIds([]);
+        setToken(null);
+        setDbUser(null);
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
         return signOut(auth);
-
     };
 
     // Update display name & photo
@@ -53,13 +67,23 @@ export const AuthProvider = ({ children }) => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
 
+            // Check for stored JWT token
+            const storedToken = localStorage.getItem("token");
+            const storedUser = localStorage.getItem("user");
+
+            if (storedToken && storedUser) {
+                setToken(storedToken);
+                setDbUser(JSON.parse(storedUser));
+            }
+
             // fetch cart only when user exists
-            if (currentUser) {
+            if (currentUser || storedToken) {
                 try {
-                    const dbres = await fetch(`http://localhost:3000/users/${currentUser.email}`);
+                    const dbres = await fetch(`http://localhost:3000/users/${currentUser?.email || JSON.parse(storedUser)?.email}`);
                     const dbdata = await dbres.json();
                     // Store MongoDB _id
                     setDbUser(dbdata);
+
                     const res = await fetch("http://localhost:3000/cart");
                     const data = await res.json();
 
@@ -67,7 +91,6 @@ export const AuthProvider = ({ children }) => {
                     const ids = data.map(item => item.product._id);
                     setCartIds(ids);
                 } catch (err) {
-                    setDbUser(null);
                     console.error("Failed to fetch cart", err);
                 }
             } else {
@@ -80,14 +103,18 @@ export const AuthProvider = ({ children }) => {
 
         return () => unsubscribe();
     }, []);
+
     const authInfo = {
         user,
         loading,
         createUser,
         LoginUser,
+        loginWithJWT,
         Logout,
         DisplayUser,
         setLoading,
+        token,
+        setToken,
         cartIds,
         setCartIds,
         dbUser

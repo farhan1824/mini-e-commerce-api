@@ -6,6 +6,7 @@ import { AuthContext } from '../../Firebase/Authentication/AuthContext';
 
 export const Order = () => {
     const { data: cartItems, loading, error } = useFetchData("cart");
+    console.log(cartItems);
     const { dbUser } = use(AuthContext)
     console.log(dbUser);
     const navigate = useNavigate();
