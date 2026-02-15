@@ -3,7 +3,7 @@ import { useLoaderData, Link } from 'react-router-dom';
 
 const CategoryProductDetails = () => {
     const products = useLoaderData(); // This is the array of products from loader
-    console.log(products);
+    // console.log(products);
 
     return (
         <section className="py-12 md:py-16 bg-gray-50">

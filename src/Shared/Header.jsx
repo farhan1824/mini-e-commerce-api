@@ -7,14 +7,14 @@ const Header = () => {
     const { user, Logout, loading, LoginUser, dbUser } = use(AuthContext)
     // console.log(dbUser.role);
     const navigate = useNavigate()
-    console.log(user);
+    // console.log(user);
     const handelogin = (e) => {
         e.preventDefault();
-        console.log("this has been clicked");
+        // console.log("this has been clicked");
         const form = e.target;
         const email = form.email.value;
         const password = form.password.value;
-        console.log(email, password);
+        // console.log(email, password);
         LoginUser(email, password)
             .then((result) => {
                 Swal.fire({

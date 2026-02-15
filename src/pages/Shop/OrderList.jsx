@@ -7,7 +7,7 @@ const OrderList = () => {
     const allOrders = useLoaderData(); // array of all orders from backend
     // Filter orders for logged-in user
     const userOrders = allOrders.filter(order => order.userId === dbUser._id);
-    console.log(userOrders)
+    // console.log(userOrders)
     if (userOrders.length === 0) {
         return (
             <div className="min-h-[60vh] flex flex-col items-center justify-center text-center bg-gray-50 p-6 rounded-lg shadow-md">
