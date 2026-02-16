@@ -31,3 +31,6 @@ Backend/.env
 .env.production
 .env.test
 Backend/.vercel
+# .firebase
+firebase.json
+# .firebaserc
